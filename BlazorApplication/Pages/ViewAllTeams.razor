@@ -1,0 +1,142 @@
+﻿@page "/ViewAllTeams"
+@using BlazorApplication.Models
+@using BlazorApplication.Data
+
+@inject NavigationManager _navigationManager
+@inject TeamService _teamService
+
+@if (allTeams == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <p>
+        Filter by Team Name:
+        <input type="text" @oninput="@(arg => FilterByTeamName(arg))" style="width:120px"/>
+    </p>
+
+    <p>
+        Filter by Ranking Below:
+        <input type="text" @oninput="@(arg => FilterByRankingBelowX(arg))" style="width:120px"/>
+    </p>
+
+    <br/>
+    <h3>List of All Teams</h3>
+    <br/>
+
+    @foreach (var t in teamsToShow)
+    {
+        <p>@t.TeamName, coached by @t.NameOfCoach, ranking @t.Ranking</p>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Player Name</th>
+                <th>Shirt Number</th>
+                <th>Salary</th>
+                <th>Goals this season</th>
+                <th>Position</th>
+                <th>Delete Player</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (t.Players.Count == 0)
+            {
+                <p><em>The team has no Players to show</em> </p>
+            }
+            else
+            {
+                @foreach (var p in t.Players)
+                {
+                    <tr>
+                        <td>@p.Name</td>
+                        <td>@p.ShirtNumber</td>
+                        <td>@p.Salary</td>
+                        <td>@p.GoalsThisSeason</td>
+                        <td>@p.Position</td>
+
+                        <td>
+                            <button @onclick="@(() => DeletePlayerAsync(p.Id))">
+                                <i class="oi oi-trash" style="color:#ff0000"/>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    }
+
+} 
+
+
+@code {
+    
+    
+    private IList<Team> allTeams = new List<Team>();
+    private IList<Team> teamsToShow = new List<Team>();
+    
+    private string filterByTeamName = "";
+    private int? filterByRankingBelowX = null;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage();
+    }
+    
+    private async Task FilterByTeamName(ChangeEventArgs changeEventArgs)
+    {
+        filterByTeamName = "";
+        try
+        {
+            filterByTeamName = changeEventArgs.Value.ToString();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
+        await ExecuteFilter();
+    }
+    
+    private async Task FilterByRankingBelowX(ChangeEventArgs changeEventArgs)
+    {
+        filterByRankingBelowX = null;
+        try
+        {
+            filterByRankingBelowX = int.Parse(changeEventArgs.Value.ToString());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        await ExecuteFilter();
+    }
+
+    private async Task ExecuteFilter()
+    {
+        allTeams = await _teamService.GetAllTeamsAsync();
+
+        teamsToShow = allTeams.Where(t => (filterByTeamName != null && t.TeamName.Contains(filterByTeamName) || filterByTeamName == null)).ToList();
+        teamsToShow = allTeams.Where(t => filterByRankingBelowX is >= 1 && t.Ranking <= filterByRankingBelowX || filterByRankingBelowX == null).ToList();
+
+    }
+    
+    
+    private async Task DeletePlayerAsync(int id)
+    {
+        await _teamService.DeletePlayerAsync(id);
+        await LoadPage();
+    }
+
+    private async Task LoadPage()
+    {
+        allTeams = await _teamService.GetAllTeamsAsync();
+        teamsToShow = await _teamService.GetAllTeamsAsync();
+    }
+    
+}

@@ -1,0 +1,44 @@
+﻿@page "/AddTeam"
+@using BlazorApplication.Models
+@using BlazorApplication.Data
+
+@inject TeamService _teamService
+@inject NavigationManager _navigationManager
+
+
+<h3>Add Team</h3>
+
+<EditForm Model="@_newTeam" OnValidSubmit="@AddNewTeam">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <div class="form-group">
+        Team name:<br/>
+        <InputText @bind-Value="_newTeam.TeamName"/>
+    </div>
+    <div class="form-group">
+        Coach Name:<br/>
+        <InputText @bind-Value="_newTeam.NameOfCoach"/>
+    </div>
+    <div class="form-group">
+        Ranking:<br/>
+        <InputNumber @bind-Value="_newTeam.Ranking"/>
+    </div>
+    
+    
+    <p class="actions">
+        <button class="btn btn-outline-dark" type="submit">Create</button>
+    </p>
+</EditForm>
+
+
+@code {
+    
+    private Team _newTeam = new Team();
+    
+    private async Task AddNewTeam()
+    {
+        await _teamService.AddNewTeamAsync(_newTeam);
+        _navigationManager.NavigateTo("/ViewAllTeams");
+    }
+    
+}

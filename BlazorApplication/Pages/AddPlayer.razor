@@ -1,0 +1,62 @@
+﻿@page "/AddPlayer"
+@using BlazorApplication.Models
+@using BlazorApplication.Data
+
+@inject TeamService _teamService
+@inject NavigationManager _navigationManager
+
+<h3>Add Player</h3>
+
+@if (_allTeams == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <EditForm Model="@_newPlayer" OnValidSubmit="@AddNewPlayerAsync">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="form-group"> Name:<br/> <InputText @bind-Value="_newPlayer.Name"/> </div>
+        <div class="form-group"> Shirt Number:<br/> <InputNumber @bind-Value="_newPlayer.ShirtNumber"/> </div>
+        <div class="form-group"> Salary:<br/> <InputNumber @bind-Value="_newPlayer.Salary"/></div>
+        <div class="form-group"> Goals This Season:<br/> <InputNumber @bind-Value="_newPlayer.GoalsThisSeason"/></div>
+        <div class="form-group"> Position:<br/><InputText @bind-Value="_newPlayer.Position"/></div>
+        
+        <div class="form-group">
+            Author: <br/>
+            <InputSelect @bind-Value="selectedTeam">
+                <option value=""> Select Team </option>
+                
+                @foreach (var team in _allTeams)
+                {
+                    <option value="@team.TeamName"> @team.TeamName </option>
+                }
+            </InputSelect>
+        </div>
+
+        <p class="actions">
+            <button class="btn btn-outline-dark" type="submit">Create</button>
+        </p>
+    </EditForm>
+}
+
+@code {
+    
+    private Player _newPlayer = new Player();
+    private IList<Team> _allTeams = new List<Team>();
+    private string selectedTeam;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _allTeams = await _teamService.GetAllTeamsAsync();
+    }
+    
+    private async Task AddNewPlayerAsync()
+    {
+        await _teamService.AddNewPlayerAsync(_newPlayer, selectedTeam);
+        _navigationManager.NavigateTo("/ViewAllTeams");
+    }
+}
